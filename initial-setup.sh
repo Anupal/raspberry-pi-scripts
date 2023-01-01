@@ -49,3 +49,14 @@ else
   echo "x Skipping locales configuration"
 fi
 
+# Install Docker
+prompt_yn "Do you want to install Docker?"
+result=$?
+if [ $result -eq 1 ]; then
+  echo "+ Installing Docker"
+  curl -fsSL https://get.docker.com -o get-docker.sh
+  sh get-docker.sh
+  usermod -aG docker $SUDO_USER
+else
+  echo "x Skipping Docker installation"
+fi
