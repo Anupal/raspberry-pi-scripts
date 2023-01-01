@@ -1,0 +1,61 @@
+version: "3"
+
+services:
+  cloudflared:
+    container_name: cloudflared
+    build:
+      context: .
+      dockerfile: Dockerfile-cloudflared
+    restart: unless-stopped
+    networks:
+      pihole_net:
+        ipv4_address: 10.0.0.2
+
+  dhcphelper:
+    build:
+      context: .
+      dockerfile: Dockerfile-dhcp-helper
+    restart: unless-stopped
+    network_mode: "host"
+    command: -s 10.0.0.3
+    cap_add:
+      - NET_ADMIN
+
+  pihole:
+    container_name: pihole
+    image: pihole/pihole:latest
+    restart: unless-stopped
+    ports:
+      - "53:53/tcp"
+      - "53:53/udp"
+      - "8053:80/tcp"
+    environment:
+      - ServerIP=10.0.0.3
+      - PIHOLE_DNS_=10.0.0.2#5053
+      - DHCP_ACTIVE=true
+      - DHCP_START=192.168.4.50
+      - DHCP_END=192.168.4.150
+      - DHCP_ROUTER=192.168.4.1
+      - DHCP_LEASETIME=12
+      - IPv6=false
+      - TZ=Asia/Kolkata
+      - DNSMASQ_LISTENING=all
+      - WEBPASSWORD=admin
+    volumes:
+      - './etc-pihole:/etc/pihole'
+      - './etc-dnsmasq.d:/etc/dnsmasq.d'
+    networks:
+      pihole_net:
+        ipv4_address: 10.0.0.3
+    dns:
+      - 127.0.0.1
+      - 1.1.1.1
+    cap_add:
+      - NET_ADMIN
+
+networks:
+  pihole_net:
+    driver: bridge
+    ipam:
+     config:
+       - subnet: 10.0.0.0/29
