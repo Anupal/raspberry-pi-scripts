@@ -1,5 +1,7 @@
 #!/bin/bash
 
+LOGFILE="log-$(date +%Y%m%d%H%M%S).txt"
+
 # -------------------------------- HELPER FUNCTIONS -------------------------------- #
 
 prompt_yn() {
@@ -24,6 +26,24 @@ configure_locales() {
   dpkg-reconfigure --frontend=noninteractive locales
 }
 
+loading() {
+  echo -n "$2 "
+  list=("⡿" "⣟" "⣯" "⣷" "⣾" "⣽" "⣻" "⢿")
+  tput civis
+  while kill -0 $1 &> /dev/null
+  do
+    for s in "${list[@]}"; do
+      tput setaf $(shuf -i 1-10 -n 1)
+      echo -n "$s"
+      sleep 0.1
+      echo -ne "\b"
+    done
+  done
+  tput sgr0
+  tput cnorm
+  echo
+}
+
 # ---------------------------------- SCRIPT LOGIC ---------------------------------- #
 
 # Exit if user isn't root.
@@ -33,13 +53,17 @@ if [ $user_id -ne 0 ]; then
   exit 1
 fi
 
-apt-get update && apt-get upgrade -y
+echo -e "Logging all output to file $LOGFILE\n"
+
+apt-get update &>> $LOGFILE && apt-get upgrade -y &>> $LOGFILE &
+loading $! "+ Update/Upgrade packages"
+
 
 prompt_yn "Do you want to configure locales?"
 result=$?
 if [ $result -eq 1 ]; then
-  echo "+ Configuring locales - setting language as 'en_US.UTF-8'"
-  configure_locales
+  configure_locales &>> $LOGFILE &
+  loading $! "+ Configuring locales - setting language as 'en_US.UTF-8'"
 else
   echo "x Skipping locales configuration"
 fi
@@ -48,10 +72,10 @@ fi
 prompt_yn "Do you want to install Docker?"
 result=$?
 if [ $result -eq 1 ]; then
-  echo "+ Installing Docker"
-  curl -fsSL https://get.docker.com -o get-docker.sh
-  sh get-docker.sh
-  usermod -aG docker $SUDO_USER
+  curl -fsSL https://get.docker.com -o get-docker.sh && \
+  sh get-docker.sh &>> $LOGFILE && \
+  usermod -aG docker $SUDO_USER &>> $LOGFILE &
+  loading $! "+ Installing Docker"
 else
   echo "x Skipping Docker installation"
 fi
@@ -60,8 +84,8 @@ fi
 prompt_yn "Do you want to setup Pihole, Cloudflared and DHCP helper Docker containers?"
 result=$?
 if [ $result -eq 1 ]; then
-  echo "+ Setup Pihole, Cloudflared, and DHCP server as Docker containers"
-  docker compose -f docker-pihole-doh-dhcp/docker-compose.yaml up -d
+  docker compose -f docker-pihole-doh-dhcp/docker-compose.yaml up -d &>> $LOGFILE &
+  loading $! "+ Setup Pihole, Cloudflared, and DHCP server as Docker containers"
  else
   echo "x Skipping Pihole setup"
 fi
