@@ -12,6 +12,7 @@ services:
         ipv4_address: 10.0.0.2
 
   dhcphelper:
+    container_name: dhcphelper
     build:
       context: .
       dockerfile: Dockerfile-dhcp-helper
@@ -42,16 +43,14 @@ services:
       - DNSMASQ_LISTENING=all
       - WEBPASSWORD=admin
     volumes:
-      - './etc-pihole:/etc/pihole'
-      - './etc-dnsmasq.d:/etc/dnsmasq.d'
+      - './mounts/etc/pihole:/etc/pihole'
+      - './mounts/etc/dnsmasq.d:/etc/dnsmasq.d'
     networks:
       pihole_net:
         ipv4_address: 10.0.0.3
     dns:
       - 127.0.0.1
       - 1.1.1.1
-    cap_add:
-      - NET_ADMIN
 
 networks:
   pihole_net:

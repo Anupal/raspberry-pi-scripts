@@ -1,10 +1,5 @@
 #!/bin/bash
 
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[0;32m'
-NC='\033[0m' # No Color
-
 # -------------------------------- HELPER FUNCTIONS -------------------------------- #
 
 prompt_yn() {
@@ -34,8 +29,8 @@ configure_locales() {
 # Exit if user isn't root.
 user_id=$(id -u)
 if [ $user_id -ne 0 ]; then
-  printf "${RED}Script should be run as root!${NC}\n"
-  exit
+  echo "Script should be run as root!" >&2
+  exit 1
 fi
 
 apt-get update && apt-get upgrade -y
@@ -60,3 +55,14 @@ if [ $result -eq 1 ]; then
 else
   echo "x Skipping Docker installation"
 fi
+
+# Install Pihole, DoH and DHCP server as Docker clients
+prompt_yn "Do you want to setup Pihole, Cloudflared and DHCP helper Docker containers?"
+result=$?
+if [ $result -eq 1 ]; then
+  echo "+ Setup Pihole, Cloudflared, and DHCP server as Docker containers"
+  docker compose -f docker-pihole-doh-dhcp/docker-compose.yaml up -d
+ else
+  echo "x Skipping Pihole setup"
+fi
+
