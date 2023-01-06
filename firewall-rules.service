@@ -1,0 +1,10 @@
+[Unit]
+Description=Startup script for firewall rules.
+
+[Service]
+User=root
+Type=oneshot
+ExecStart=/usr/bin/firewall-rules.sh
+
+[Install]
+WantedBy=multi-user.target

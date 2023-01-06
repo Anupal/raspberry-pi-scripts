@@ -26,6 +26,14 @@ configure_locales() {
   dpkg-reconfigure --frontend=noninteractive locales
 }
 
+configuring_firewall_rules() {
+  cp $(pwd)/firewall-rules.sh /usr/bin/firewall-rules.sh
+  chmod +x /usr/bin/firewall-rules.sh
+  cp $(pwd)/firewall-rules.service /etc/systemd/system/firewall-rules.service
+  systemctl daemon-reload
+  systemctl enable --now firewall-rules.service
+}
+
 loading() {
   echo -n "$2 "
   list=("⡿" "⣟" "⣯" "⣷" "⣾" "⣽" "⣻" "⢿")
@@ -55,7 +63,7 @@ fi
 
 echo -e "Logging all output to file $LOGFILE\n"
 
-apt-get update &>> $LOGFILE && apt-get upgrade -y &>> $LOGFILE &
+apt-get update &>> $LOGFILE && apt-get upgrade -y &>> $LOGFILE && apt-get full-upgrade -y &>> $LOGFILE && apt-get dist-upgrade -y &>> $LOGFILE  &
 loading $! "+ Update/Upgrade packages"
 
 
@@ -66,6 +74,16 @@ if [ $result -eq 1 ]; then
   loading $! "+ Configuring locales - setting language as 'en_US.UTF-8'"
 else
   echo "x Skipping locales configuration"
+fi
+
+# Configure firewall rules
+prompt_yn "Do you want to configure firewall rules, rules located at $(pwd)/firewall-rules.sh:"
+result=$?
+if [ $result -eq 1 ]; then
+  configuring_firewall_rules &>> $LOGFILE &
+  loading $! "+ Configuring firewall rules"
+else
+  echo "x Skipping firewall rules configuration"
 fi
 
 # Install Docker
