@@ -1,0 +1,10 @@
+[Unit]
+Description=Startup script for WiFi AP.
+
+[Service]
+User=root
+Type=oneshot
+ExecStart=/usr/bin/wifi-ap.sh
+
+[Install]
+WantedBy=multi-user.target
