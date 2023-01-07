@@ -30,18 +30,21 @@ services:
       - "53:53/tcp"
       - "53:53/udp"
       - "8053:80/tcp"
+    cap_add:
+      - NET_ADMIN
     environment:
-      - ServerIP=10.0.0.3
-      - PIHOLE_DNS_=10.0.0.2#5053
-      - DHCP_ACTIVE=true
-      - DHCP_START=192.168.4.50
-      - DHCP_END=192.168.4.150
-      - DHCP_ROUTER=192.168.4.1
-      - DHCP_LEASETIME=12
-      - IPv6=false
-      - TZ=Asia/Kolkata
-      - DNSMASQ_LISTENING=all
-      - WEBPASSWORD=admin
+      ServerIP: 10.0.0.3
+      PIHOLE_DNS: 10.0.0.2#5053
+      DHCP_ACTIVE: true
+      VIRTUAL_HOST: psyk.fi
+      DHCP_START: 192.168.4.50
+      DHCP_END: 192.168.4.150
+      DHCP_ROUTER: 192.168.4.1
+      DHCP_LEASETIME: 12
+      IPv6: false
+      TZ: Asia/Kolkata
+      DNSMASQ_LISTENING: all
+      WEBPASSWORD: admin
     volumes:
       - './mounts/etc/pihole:/etc/pihole'
       - './mounts/etc/dnsmasq.d:/etc/dnsmasq.d'
@@ -51,6 +54,8 @@ services:
     dns:
       - 127.0.0.1
       - 1.1.1.1
+    depends_on:
+      - dhcphelper
 
 networks:
   pihole_net:
